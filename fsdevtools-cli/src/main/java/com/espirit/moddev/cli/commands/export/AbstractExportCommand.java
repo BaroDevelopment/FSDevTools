@@ -46,6 +46,7 @@ import de.espirit.firstspirit.agency.StoreAgent;
 import de.espirit.firstspirit.store.access.nexport.operations.ExportOperation;
 import de.espirit.firstspirit.transport.PropertiesTransportOptions;
 import de.espirit.firstspirit.transport.PropertiesTransportOptions.ProjectPropertyType;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,13 +104,24 @@ public abstract class AbstractExportCommand extends SimpleCommand<ExportResult> 
 	 * Creates a new AbstractExportCommand and configures a set of default argument parsers.
 	 */
 	public AbstractExportCommand() {
-		parser = new RegistryBasedParser();
+		parser = createIdentifierParser();
+	}
+
+	/**
+	 * Creates a parser for the identifiers the export command accepts.
+	 *
+	 * @return the parser
+	 */
+	@NotNull
+	public static RegistryBasedParser createIdentifierParser() {
+		final RegistryBasedParser parser = new RegistryBasedParser();
 		parser.registerParser(new RootNodeIdentifierParser());
 		parser.registerParser(new EntitiesIdentifierParser());
 		parser.registerParser(new UidIdentifierParser());
 		parser.registerParser(new ProjectPropertiesParser());
 		parser.registerParser(new SchemaIdentifierParser());
 		parser.registerParser(new PathIdentifierParser());
+		return parser;
 	}
 
 	/**
