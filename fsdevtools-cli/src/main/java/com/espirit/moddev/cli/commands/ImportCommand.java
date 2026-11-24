@@ -129,27 +129,36 @@ public class ImportCommand extends SimpleCommand<ImportResult> implements Import
 	public ImportResult call() {
 		LOGGER.info("Importing...");
 		try {
-			final OperationAgent operationAgent = getContext().requireSpecialist(OperationAgent.TYPE);
-			final ImportOperation importOperation = operationAgent.getOperation(ImportOperation.TYPE);
-			final ImportPermissionTransportOptions permissionTransportOptions = importOperation.configurePermissionTransport();
-			permissionTransportOptions.setPermissionTransport(_permissionMode.getFirstSpiritPermissionMode());
-			permissionTransportOptions.setUpdateExistingPermissions(_updateExistingPermissions);
-			importOperation.setIgnoreEntities(dontCreateEntities);
-			importOperation.setRevisionComment(getImportComment());
-			importOperation.setLayerMapper(configureLayerMapper());
-			// We do only override the settings if the 'importScheduleEntryActiveState'-flag is set to 'true'.
-			// This is only needed to prevent a hard dependency to the latest FirstSpirit version
-			// If the default value of this flag changes in FirstSpirit, we need to change this behaviour as well.
-			if (importScheduleEntryActiveState) {
-				importOperation.setImportScheduleEntryActiveState(true);
-			}
 			final String syncDirStr = getSynchronizationDirectoryString();
 			LOGGER.info("importing from directory '{}'", syncDirStr);
-			final ImportOperation.Result result = importOperation.perform(getSynchronizationDirectory(syncDirStr));
+			final ImportOperation.Result result = createImportOperation().perform(getSynchronizationDirectory(syncDirStr));
 			return new ImportResult(getContext().requireSpecialist(StoreAgent.TYPE), result);
 		} catch (final Exception e) {
 			return new ImportResult(e);
 		}
+	}
+
+	/**
+	 * Creates an {@link ImportOperation} configured with the options of this command.
+	 *
+	 * @return the configured import operation
+	 */
+	protected ImportOperation createImportOperation() {
+		final OperationAgent operationAgent = getContext().requireSpecialist(OperationAgent.TYPE);
+		final ImportOperation importOperation = operationAgent.getOperation(ImportOperation.TYPE);
+		final ImportPermissionTransportOptions permissionTransportOptions = importOperation.configurePermissionTransport();
+		permissionTransportOptions.setPermissionTransport(_permissionMode.getFirstSpiritPermissionMode());
+		permissionTransportOptions.setUpdateExistingPermissions(_updateExistingPermissions);
+		importOperation.setIgnoreEntities(dontCreateEntities);
+		importOperation.setRevisionComment(getImportComment());
+		importOperation.setLayerMapper(configureLayerMapper());
+		// We do only override the settings if the 'importScheduleEntryActiveState'-flag is set to 'true'.
+		// This is only needed to prevent a hard dependency to the latest FirstSpirit version
+		// If the default value of this flag changes in FirstSpirit, we need to change this behaviour as well.
+		if (importScheduleEntryActiveState) {
+			importOperation.setImportScheduleEntryActiveState(true);
+		}
+		return importOperation;
 	}
 
 	private LayerMapper configureLayerMapper() {

@@ -1,5 +1,12 @@
 # Release notes
 
+## Next version
+
+**New commands**
+
+* `exportDelta` exports only the elements that changed on the server since the last run into an existing sync directory. See [Delta export and import](documentation/CLI_USAGE.md#delta-export-and-import).
+* `importDelta` imports only the elements whose files differ from a git revision, without deleting anything on the server. See [Delta export and import](documentation/CLI_USAGE.md#delta-export-and-import).
+
 ## Version 5.0.0
 
 **Breaking changes**

@@ -43,3 +43,50 @@ Every command description also features information about the command's specific
 Exampe online help for test command group (enter `fs-cli help test`):
 
 ![three parts: name, synopsis and options](images/help_command_group.png)
+
+## Delta export and import
+
+`exportDelta` and `importDelta` transfer only what changed instead of the whole project.
+Both work on a sync directory that a full `export` filled before.
+
+### exportDelta
+
+```
+fs-cli -sd src/main/firstspirit exportDelta [--dryRun] [--sinceRevision <id> | --sinceDate <date>] [--useReleaseState] [-- <identifiers>]
+```
+
+Exports the elements changed on the server since the last run, with everything below them (the page of a changed section, a template, a media, ...), and the changed datasets.
+A changed SiteStore element is exported together with its neighbours, because FirstSpirit writes their order only between elements of the same export.
+Removes the folders of elements that were deleted, moved or renamed on the server.
+The revision is recorded in `.FirstSpirit/fs-cli-delta-export_<host>-<port>_<project id>.properties`; commit it together with the export.
+If `.FirstSpirit` is ignored by git, ignore its content instead and add an exception:
+
+```
+.FirstSpirit/*
+!.FirstSpirit/fs-cli-delta-export_*.properties
+```
+
+The first run needs a starting point: `--sinceDate` with the time of the last full export, or `--sinceRevision`.
+Project properties are not tracked by revisions; pass them as identifiers, for example `-- projectproperty:ALL`, to export them on every run.
+If the export fails, the sync directory is restored and no revision is recorded.
+
+### importDelta
+
+```
+fs-cli -sd src/main/firstspirit importDelta [--since <git revision>] [--dryRun] [--keepTempDir] [<import options>]
+```
+
+Imports the elements whose files differ from `--since` (default `HEAD`), including uncommitted and untracked files.
+Files are compared at the point where `--since` and the current branch split, so `--since origin/master` imports only the changes of the current branch.
+Requires `git` on the `PATH`.
+
+An element is imported with everything below it, a changed folder with all its content.
+Nothing is deleted on the server: elements deleted locally are only listed.
+An element is skipped, with the reason, if
+- it was changed, moved or deleted on the server since the last `exportDelta` or `importDelta`, so that the change is not overwritten,
+- the server has elements below it that are missing locally, because the import would delete them,
+- its folder matches more than one element on the server.
+
+The server check needs an `exportDelta` state of the current state (not `--useReleaseState`); without one, the command says so.
+It covers store elements, not datasets and project settings.
+The import options of `import`, for example `-i <comment>`, work as well.
